@@ -6,17 +6,21 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 
 - What did the game look like the first time you ran it?
 - List at least two concrete bugs you noticed at the start  
-  (for example: "the hints were backwards").
+  
+- If input was higher than secret number, the hint was to go higher and if input was lower than secret number, the hint was to go lower. However, it should have been the exact opposite. 
+- After completing one game, when I clicked new game, a new secret number was loaded, but the submit guess button did not let me submit any new guesses
+- Every difficulty level had a range for example 1-20, 1-50, etc. But the instructions always asked to guess something between 1-100. 
+
 
 **Bug Reproduction Log**
 
 Document at least 3 bugs you found. Add rows as needed.
 
-| Input | Expected Behavior | Actual Behavior | Console Output / Error |
-|-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| Input | Expected Behavior | Actual Behavior | Console Output / Error | Suspected Code location
+|-------|-------------------|-----------------|------------------------|-----|
+| guessed 60| go higher | go lower |go higher hint was displayed | app.py |
+| clicked new game| new game to start|new secret number loaded but unable to submit new guesses |Game over. Start a new game to try again. | app.py |
+| selected difficulty: hard|range to change to 1-50 |range remained 1-100 | no change in output | app.py|
 
 ---
 
