@@ -25,28 +25,52 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+**Purpose:** A Streamlit number-guessing game. You pick a difficulty, guess the secret number within a limited number of attempts, and get Higher/Lower hints and a score.
+
+**Bugs I found:**
+- The Higher/Lower hints were wrong and, later, flipped on every second guess.
+- The info text always said "between 1 and 100", even on Easy (1-20) and Hard (1-50).
+- The secret number could fall outside the selected difficulty range after switching difficulty.
+- "Attempts left" was one guess behind, and the game ended one guess early.
+- The first guess sometimes seemed to do nothing.
+
+**Fixes I applied (with Claude Code):**
+- Moved `get_range_for_difficulty` into `logic_utils.py` as the single source of truth and showed `low`/`high` in the info text.
+- Regenerated the secret and reset the game whenever the difficulty changes.
+- Removed the `str()` cast on the secret that made `check_guess` compare strings.
+- Started attempts at 0 and updated "attempts left" after each guess is processed.
+- Moved the guess input into a form so Enter and the button both submit, and made difficulty a plain dropdown.
+- Updated the three starter tests to unpack the `(outcome, message)` tuple and added five range tests.
 
 ## 📸 Demo Walkthrough
 
-Describe your fixed game in numbered steps so a reader can follow along without watching a video:
+A sample game on **Normal** (range 1-100, 8 attempts), with the secret number at 14. The values below come from running the game.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
-
-**Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
+1. The game loads: "Guess a number between 1 and 100. Attempts left: 8", score 0.
+2. You enter **40**. The game says "Go LOWER!", attempts left 7, score -5.
+3. You enter **5**. The game says "Go HIGHER!", attempts left 6, score -10.
+4. You enter **25**. The game says "Go LOWER!", attempts left 5, score -15.
+5. You enter **14**. The game says "Correct!", shows "You won! The secret was 14. Final score: 35", and the status becomes won.
+6. Submitting again shows "You already won. Start a new game to play again."
+7. Switching the difficulty to **Easy** starts a fresh game: "Guess a number between 1 and 20. Attempts left: 6", and the secret is picked from 1-20. The score is kept from the earlier game.
 
 ## 🧪 Test Results
 
 ```
-# Paste your pytest output here, e.g.:
-# pytest tests/
-# ========================= X passed in 0.XXs =========================
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0
+collected 8 items
+
+tests/test_game_logic.py::test_winning_guess PASSED                      [ 12%]
+tests/test_game_logic.py::test_guess_too_high PASSED                     [ 25%]
+tests/test_game_logic.py::test_guess_too_low PASSED                      [ 37%]
+tests/test_game_logic.py::test_range_easy PASSED                         [ 50%]
+tests/test_game_logic.py::test_range_normal PASSED                       [ 62%]
+tests/test_game_logic.py::test_range_hard PASSED                         [ 75%]
+tests/test_game_logic.py::test_range_unknown_difficulty_defaults PASSED  [ 87%]
+tests/test_game_logic.py::test_range_is_valid_for_all_difficulties PASSED [100%]
+
+============================== 8 passed in 0.04s ==============================
 ```
 
 ## 🚀 Stretch Features
