@@ -10,6 +10,7 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - If input was higher than secret number, the hint was to go higher and if input was lower than secret number, the hint was to go lower. However, it should have been the exact opposite. 
 - After completing one game, when I clicked new game, a new secret number was loaded, but the submit guess button did not let me submit any new guesses
 - Every difficulty level had a range for example 1-20, 1-50, etc. But the instructions always asked to guess something between 1-100. 
+- Later I found more: the secret could be outside the selected range after I changed difficulty, the hint flipped between Higher and Lower on every second guess, and "attempts left" lagged one guess behind so the game ended one guess early.
 
 
 **Bug Reproduction Log**
@@ -49,6 +50,8 @@ Document at least 3 bugs you found. Add rows as needed.
 
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
 
+Every time you click a button or type in a box, Streamlit re-runs the whole script from top to bottom, so ordinary variables are reset each time. `st.session_state` is the one place that survives those reruns, so the secret number, attempts, score and status live there. That caused two of my bugs. The secret was only created the first time, so it never changed when I switched difficulty and could be out of range. The attempts counter was shown before the click was handled, so it displayed the value from the previous rerun.
+
 ---
 
 ## 5. Looking ahead: your developer habits
@@ -57,3 +60,5 @@ Document at least 3 bugs you found. Add rows as needed.
   - This could be a testing habit, a prompting strategy, or a way you used Git.
 - What is one thing you would do differently next time you work with AI on a coding task?
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+
+I want to reuse writing a small pytest case for each bug and re-running the exact steps that triggered it, because that is how I knew a fix really worked. Next time I would describe the symptom precisely (what I typed, what I saw) instead of a vague summary, and I would check the AI's explanation against the code before accepting it. This project made me treat AI-generated code as a draft that can look finished and still be wrong, so I review it and test it myself.
