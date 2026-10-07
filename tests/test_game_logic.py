@@ -1,5 +1,7 @@
 from logic_utils import check_guess, get_range_for_difficulty
 
+# FIX: Claude updated these three starter tests to unpack the (outcome, message) tuple that
+# check_guess returns; I reviewed the failing output and approved the change.
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
     outcome, _ = check_guess(50, 50)
@@ -15,6 +17,7 @@ def test_guess_too_low():
     outcome, _ = check_guess(40, 50)
     assert outcome == "Too Low"
 
+# FIX: Range tests below were written by Claude from a prompt I wrote, to cover the range-mismatch bug.
 def test_range_easy():
     # Easy should be 1 to 20
     assert get_range_for_difficulty("Easy") == (1, 20)

@@ -26,18 +26,22 @@ Document at least 3 bugs you found. Add rows as needed.
 
 ## 2. How did you use AI as a teammate?
 
-- Which AI tools did you use on this project (for example: ChatGPT, Gemini, Copilot)?
-- Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
-- Give one example of an AI suggestion you did not accept as written (including what the AI suggested, why you rejected or changed it, and how you verified your version). It does not have to be a suggestion that was wrong: over-engineered, out of scope, harder to read, or a poor fit for this codebase all count.
+- **Tool used:** Claude Code (agent mode) inside VS Code.
+- **A correct suggestion:** I reported that the Higher/Lower hint kept flipping when I guessed 5 against a secret of 14. Claude found that `app.py` converted the secret to a string on every even attempt (`str(st.session_state.secret)`), so `check_guess` compared strings, and `"5" > "14"` is true because `"5"` sorts after `"1"`. It suggested removing the cast. That was correct because the flip lined up exactly with the even-numbered attempts. I verified it by guessing 5 against a secret of 14 several times in a row, and the hint stayed "Go HIGHER!" every time.
+- **A suggestion I did not accept as written:** When I said the first guess seemed to do nothing, Claude's explanation was that pressing Enter in a bare `st.text_input` reruns the page without a Submit click, so it moved the input and button into an `st.form`. I treated that as a hypothesis, not a confirmed fix, because it could not reproduce the problem in a headless test, which clicks the button directly and never exercises the Enter key. The form is a reasonable change, but I did not accept the explanation as proven. I checked it by running the app headlessly (attempts left went 8 to 7 to 6 after each guess) and then trying both Enter and the button in the browser. [FILL IN: what you saw in the browser]
 
 ---
 
 ## 3. Debugging and testing your fixes
 
-- How did you decide whether a bug was really fixed?
-- Describe at least one test you ran (manual or using pytest)  
-  and what it showed you about your code.
-- Did AI help you design or understand any tests? How?
+- **How I decided a bug was fixed:** I re-ran the exact steps that triggered it and compared against what I expected, then backed it with a pytest case where the logic could be tested on its own.
+- **pytest:** I ran `python -m pytest -v` and got `8 passed`. That covers the 3 starter tests (`test_winning_guess`, `test_guess_too_high`, `test_guess_too_low`) and 5 new tests for `get_range_for_difficulty` (Easy 1-20, Normal 1-100, Hard 1-50, unknown difficulty falls back to 1-100, and low is always below high). The three starter tests were failing at first because `check_guess` returns an `(outcome, message)` tuple and the tests compared it to a plain string. The tests were wrong, not the code, so I updated them to unpack the tuple.
+- **Manual / headless checks:**
+  - Switching difficulty 60 times in a row always gave a secret inside the selected range.
+  - Guessing 5 against a secret of 14 gave "Go HIGHER!" every time, with no more flipping.
+  - "Attempts left" now counts down 8, 7, 6 ... 0 on Normal, and the game ends on the 8th guess instead of the 7th.
+  - New Game resets the attempts back to 8.
+- **Did AI help with tests:** Yes. I wrote the prompt describing the range bug and Claude generated the five range tests, then ran pytest and explained why the three starter tests failed. It also drove the app with Streamlit's `AppTest` so I could check the secret, hints and attempts without clicking through the game by hand.
 
 ---
 

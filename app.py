@@ -1,5 +1,7 @@
 import random
 import streamlit as st
+# FIX: Moved get_range_for_difficulty into logic_utils.py as the single source of truth;
+# I described the refactor and Claude (agent mode) deleted the duplicate here and imported it.
 from logic_utils import check_guess, get_range_for_difficulty
 
 
@@ -49,6 +51,7 @@ difficulty = st.sidebar.selectbox(
     "Difficulty",
     ["Easy", "Normal", "Hard"],
     index=1,
+    filter_mode=None,  # FIX: I asked for a plain dropdown (no search box); Claude suggested filter_mode=None.
 )
 
 attempt_limit_map = {
@@ -63,11 +66,19 @@ low, high = get_range_for_difficulty(difficulty)
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 
-if "secret" not in st.session_state:
+# FIX: Secret was generated once and could fall outside the selected range. Claude diagnosed it
+# when I reported the bug; I approved the fix, and Claude verified it with a headless AppTest run.
+# Start a fresh game whenever the difficulty changes so the secret always
+# matches the selected range.
+if st.session_state.get("game_difficulty") != difficulty:
+    st.session_state.game_difficulty = difficulty
     st.session_state.secret = random.randint(low, high)
+    st.session_state.attempts = 0
+    st.session_state.status = "playing"
+    st.session_state.history = []
 
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
+    st.session_state.attempts = 0
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -80,10 +91,19 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
-st.info(
-    f"Guess a number between {low} and {high}. "
-    f"Attempts left: {attempt_limit - st.session_state.attempts}"
-)
+# FIX: "Attempts left" lagged one guess and the game ended a guess early. I reported the symptoms;
+# Claude traced it to attempts starting at 1 and the info box rendering before the submit was handled.
+# Filled in after a guess is processed so "attempts left" is never one behind.
+info_box = st.empty()
+
+
+def show_info():
+    # FIX: Text used a hardcoded "1 and 100"; I asked for low/high, Claude made the change.
+    info_box.info(
+        f"Guess a number between {low} and {high}. "
+        f"Attempts left: {attempt_limit - st.session_state.attempts}"
+    )
+
 
 with st.expander("Developer Debug Info"):
     st.write("Secret:", st.session_state.secret)
@@ -92,17 +112,21 @@ with st.expander("Developer Debug Info"):
     st.write("Difficulty:", difficulty)
     st.write("History:", st.session_state.history)
 
-raw_guess = st.text_input(
-    "Enter your guess:",
-    key=f"guess_input_{difficulty}"
-)
+# FIX: First guess seemed to do nothing. I described it; Claude's hypothesis was Enter in a bare
+# text_input reruns without a submit, so it moved the input into a form (not confirmed in a browser).
+# A form sends the text and the submit together, so pressing Enter or clicking
+# the button both count as one guess (a bare text_input reruns on Enter alone).
+with st.form("guess_form", clear_on_submit=True):
+    raw_guess = st.text_input(
+        "Enter your guess:",
+        key=f"guess_input_{difficulty}"
+    )
+    submit = st.form_submit_button("Submit Guess 🚀")
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 with col1:
-    submit = st.button("Submit Guess 🚀")
-with col2:
     new_game = st.button("New Game 🔁")
-with col3:
+with col2:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
@@ -114,6 +138,7 @@ if new_game:
     st.rerun()
 
 if st.session_state.status != "playing":
+    show_info()
     if st.session_state.status == "won":
         st.success("You already won. Start a new game to play again.")
     else:
@@ -131,12 +156,9 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
-
-        outcome, message = check_guess(guess_int, secret)
+        # FIX: Secret was cast to str on even attempts, flipping Higher/Lower hints. I spotted the
+        # odd hints; Claude found the str() cast and removed it, then re-tested with secret=14, guess=5.
+        outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
             st.warning(message)
@@ -162,6 +184,8 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+show_info()
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

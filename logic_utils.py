@@ -1,5 +1,6 @@
 def get_range_for_difficulty(difficulty: str):
     """Return (low, high) inclusive range for a given difficulty."""
+    # FIX: Implemented here (was a stub) when I had Claude refactor it out of app.py.
     if difficulty == "Easy":
         return 1, 20
     if difficulty == "Normal":
